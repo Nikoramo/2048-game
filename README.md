@@ -1,4 +1,10 @@
-# Base layout template with Gulp, SCSS and Stylelint
-1. Create a repo using this template
-1. Replace `<your_account>` and `<repo_name>` with your Github username and the new repo name
-    - [DEMO LINK](https://<your_account>.github.io/<repo_name>/)
+# 2048 game
+
+    - [LINK](https://Nikoramo.github.io/2048-game/)
+
+  Web-based implementation of the popular puzzle game called "2048". In the 2048 game, the player slides numbered tiles on a grid to combine them and create a tile with the number 2048.
+
+  Technologies used:
+ 1. HTML
+ 2. SCSS
+ 3. JavaScript
