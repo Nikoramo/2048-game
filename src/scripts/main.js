@@ -46,7 +46,7 @@ function hasEmptyCell() {
   return false;
 }
 
-function generateRandomTile() {
+function generateRandomTile(quantity) {
   if (!hasEmptyCell()) {
     loseMessage.classList.remove('hidden');
     gameStatus = false;
@@ -54,14 +54,20 @@ function generateRandomTile() {
     return;
   }
 
-  let emptyCell = false;
+  let emptyCellCount = 0;
 
-  while (!emptyCell) {
+  while (emptyCellCount < quantity) {
     const x = Math.floor(Math.random() * maxRows);
     const y = Math.floor(Math.random() * maxColumns);
 
-    if (board[x][y] === 0) {
-      const newValue = Math.random() < 0.9 ? 2 : 4;
+    const newCell = 0;
+    const newValueProbability = 0.9;
+    const newValue2 = 2;
+    const newValue4 = 4;
+
+    if (board[x][y] === newCell) {
+      const newValue = Math.random() < newValueProbability
+        ? newValue2 : newValue4;
 
       board[x][y] = newValue;
 
@@ -69,7 +75,7 @@ function generateRandomTile() {
 
       tile.innerText = newValue;
       tile.classList.add(`field-cell--${newValue}`);
-      emptyCell = true;
+      emptyCellCount++;
     }
   }
 }
@@ -92,11 +98,12 @@ function startGame() {
     });
   });
 
-  generateRandomTile();
-  generateRandomTile();
+  generateRandomTile(2);
 }
 
 function updateTile(element, value) {
+  const winValue = 2048;
+
   element.innerText = '';
   element.classList.value = '';
   element.classList.add('field-cell');
@@ -106,7 +113,7 @@ function updateTile(element, value) {
     element.innerText = value;
   }
 
-  if (value === 2048) {
+  if (value === winValue) {
     winMassage.classList.remove('hidden');
     gameStatus = false;
   }
@@ -122,27 +129,25 @@ document.addEventListener('keydown', (e) => {
   switch (e.code) {
     case ArrowLeft:
       moveLeft();
-      generateRandomTile();
       break;
 
     case ArrowRight:
       moveRight();
-      generateRandomTile();
       break;
 
     case ArrowUp:
       moveUp();
-      generateRandomTile();
       break;
 
     case ArrowDown:
       moveDown();
-      generateRandomTile();
       break;
 
     default:
-      break;
+      return;
   }
+
+  generateRandomTile(1);
 });
 
 function removeZero(row) {
@@ -172,19 +177,22 @@ function move(row) {
   return newRow;
 }
 
+function updateTilesInRow(x) {
+  for (let y = 0; y < maxColumns; y++) {
+    const tile = document.getElementById(`${x}-${y}`);
+    const value = board[x][y];
+
+    updateTile(tile, value);
+  }
+}
+
 function moveLeft() {
   for (let x = 0; x < maxRows; x++) {
     const row = board[x];
     const movingRow = move(row);
 
     board[x] = movingRow;
-
-    for (let y = 0; y < maxColumns; y++) {
-      const tile = document.getElementById(`${x}-${y}`);
-      const value = board[x][y];
-
-      updateTile(tile, value);
-    }
+    updateTilesInRow(x);
   }
 }
 
@@ -195,12 +203,7 @@ function moveRight() {
 
     board[x] = movingRow.reverse();
 
-    for (let y = 0; y < maxColumns; y++) {
-      const tile = document.getElementById(`${x}-${y}`);
-      const value = board[x][y];
-
-      updateTile(tile, value);
-    }
+    updateTilesInRow(x);
   }
 }
 
