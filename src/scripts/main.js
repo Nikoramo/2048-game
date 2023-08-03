@@ -1,240 +1,201 @@
 'use strict';
 
-const rows = document.querySelectorAll('tr');
-const mainButton = document.querySelector('button');
-const gameScore = document.querySelector('.game-score');
+const columns = [[], [], [], []];
+const rows = [...document.querySelectorAll('.field-row')];
+const cells = document.querySelectorAll('.field-cell');
+const cellsInRow = rows.map((row) => [...row.querySelectorAll('.field-cell')]);
+const startCellVelues = [2, 2, 2, 2, 2, 2, 2, 2, 2, 4];
+
+const startButton = document.querySelector('.start');
 const startMessage = document.querySelector('.message-start');
-const winMassage = document.querySelector('.message-win');
 const loseMessage = document.querySelector('.message-lose');
+const winMessage = document.querySelector('.message-win');
+const gameScore = document.querySelector('.game-score');
+const winScore = 2048;
 
-const ArrowLeft = 'ArrowLeft';
-const ArrowRight = 'ArrowRight';
-const ArrowUp = 'ArrowUp';
-const ArrowDown = 'ArrowDown';
+for (let i = 0; i < 4; i++) {
+  for (let j = 0; j < 4; j++) {
+    columns[j].push(rows[i].children[j]);
+  }
+}
 
-let gameStatus;
-let board;
-let score = 0;
-const maxRows = rows.length;
-const maxColumns = maxRows;
+let clearCells = [...cells];
+let started = false;
+let rotated = false;
 
-mainButton.addEventListener('click', () => {
-  mainButton.classList.remove('start');
-  mainButton.classList.add('restart');
-  mainButton.innerText = 'Restart';
+function randomCellFill() {
+  if (!clearCells.length) {
+    return;
+  }
 
-  startMessage.classList.add('hidden');
-  winMassage.classList.add('hidden');
+  const randomIndex = (someArr) => Math.floor(Math.random() * someArr.length);
+  const randomCell = clearCells[randomIndex(clearCells)];
+  const randomValue = startCellVelues[randomIndex(startCellVelues)];
+
+  randomCell.classList = (`field-cell field-cell--${randomValue}`);
+  randomCell.innerText = randomValue;
+
+  clearCells.splice(clearCells.indexOf(randomCell), 1);
+}
+
+const start = () => {
+  startMessage.style = 'display: none;';
+  startButton.classList = 'button restart';
+  startButton.innerText = 'Restart';
+
+  randomCellFill();
+  randomCellFill();
+  started = true;
+};
+
+const restart = () => {
   loseMessage.classList.add('hidden');
+  winMessage.classList.add('hidden');
+  clearCells = [...cells];
+  gameScore.innerText = 0;
 
-  score = 0;
-  gameScore.innerText = score;
-  gameStatus = true;
+  cells.forEach(cell => {
+    cell.innerText = '';
+    cell.className = 'field-cell';
+  });
 
-  startGame();
-});
+  randomCellFill();
+  randomCellFill();
+};
 
-function hasEmptyCell() {
-  for (let x = 0; x < maxRows; x++) {
-    for (let y = 0; y < maxColumns; y++) {
-      if (board[x][y] === 0) {
+function isMergePossible() {
+  const wholeField = [...cellsInRow, ...columns];
+
+  for (const line of wholeField) {
+    for (let i = 0; i < 3; i++) {
+      if (line[i].innerText === line[i + 1].innerText) {
         return true;
       }
     }
   }
-
-  return false;
-}
-
-function generateRandomTile(quantity) {
-  if (!hasEmptyCell()) {
-    loseMessage.classList.remove('hidden');
-    gameStatus = false;
-
-    return;
-  }
-
-  let emptyCellCount = 0;
-
-  while (emptyCellCount < quantity) {
-    const x = Math.floor(Math.random() * maxRows);
-    const y = Math.floor(Math.random() * maxColumns);
-
-    const newCell = 0;
-    const newValueProbability = 0.9;
-    const newValue2 = 2;
-    const newValue4 = 4;
-
-    if (board[x][y] === newCell) {
-      const newValue = Math.random() < newValueProbability
-        ? newValue2 : newValue4;
-
-      board[x][y] = newValue;
-
-      const tile = document.getElementById(`${x}-${y}`);
-
-      tile.innerText = newValue;
-      tile.classList.add(`field-cell--${newValue}`);
-      emptyCellCount++;
-    }
-  }
-}
-
-function startGame() {
-  board = [
-    [0, 0, 0, 0],
-    [0, 0, 0, 0],
-    [0, 0, 0, 0],
-    [0, 0, 0, 0],
-  ];
-
-  rows.forEach((row, rowIndex) => {
-    [...row.children].forEach((cell, cellIndex) => {
-      cell.id = `${rowIndex}-${cellIndex}`;
-
-      const value = board[rowIndex][cellIndex];
-
-      updateTile(cell, value);
-    });
-  });
-
-  generateRandomTile(2);
-}
-
-function updateTile(element, value) {
-  const winValue = 2048;
-
-  element.innerText = '';
-  element.classList.value = '';
-  element.classList.add('field-cell');
-
-  if (value > 0) {
-    element.classList.add(`field-cell--${value}`);
-    element.innerText = value;
-  }
-
-  if (value === winValue) {
-    winMassage.classList.remove('hidden');
-    gameStatus = false;
-  }
-}
-
-document.addEventListener('keydown', (e) => {
-  e.preventDefault();
-
-  if (!gameStatus) {
-    return;
-  }
-
-  switch (e.code) {
-    case ArrowLeft:
-      moveLeft();
-      break;
-
-    case ArrowRight:
-      moveRight();
-      break;
-
-    case ArrowUp:
-      moveUp();
-      break;
-
-    case ArrowDown:
-      moveDown();
-      break;
-
-    default:
-      return;
-  }
-
-  generateRandomTile(1);
-});
-
-function removeZero(row) {
-  return row.filter(number => number !== 0);
-}
-
-function move(row) {
-  let newRow = removeZero(row);
-
-  for (let i = 0; i < newRow.length - 1; i++) {
-    if (newRow[i] === newRow[i + 1]) {
-      newRow[i] *= 2;
-      newRow[i + 1] = 0;
-
-      score += newRow[i];
-
-      gameScore.innerText = score;
-    }
-  }
-
-  newRow = removeZero(newRow);
-
-  while (newRow.length < maxRows) {
-    newRow.push(0);
-  }
-
-  return newRow;
-}
-
-function updateTilesInRow(x) {
-  for (let y = 0; y < maxColumns; y++) {
-    const tile = document.getElementById(`${x}-${y}`);
-    const value = board[x][y];
-
-    updateTile(tile, value);
-  }
-}
-
-function moveLeft() {
-  for (let x = 0; x < maxRows; x++) {
-    const row = board[x];
-    const movingRow = move(row);
-
-    board[x] = movingRow;
-    updateTilesInRow(x);
-  }
-}
-
-function moveRight() {
-  for (let x = 0; x < maxRows; x++) {
-    const row = board[x].reverse();
-    const movingRow = move(row);
-
-    board[x] = movingRow.reverse();
-
-    updateTilesInRow(x);
-  }
 }
 
 function moveUp() {
-  for (let y = 0; y < maxColumns; y++) {
-    const column = [board[0][y], board[1][y], board[2][y], board[3][y]];
-    const movingColumn = move(column);
-
-    for (let x = 0; x < maxRows; x++) {
-      board[x][y] = movingColumn[x];
-
-      const tile = document.getElementById(`${x}-${y}`);
-      const value = board[x][y];
-
-      updateTile(tile, value);
-    }
+  for (const column of columns) {
+    rotateCells([...column].reverse());
   }
 }
 
 function moveDown() {
-  for (let y = 0; y < maxColumns; y++) {
-    const row = [board[0][y], board[1][y], board[2][y], board[3][y]].reverse();
-    const movingRow = move(row).reverse();
+  for (const column of columns) {
+    rotateCells(column);
+  }
+}
 
-    for (let x = 0; x < maxRows; x++) {
-      board[x][y] = movingRow[x];
+function moveRight() {
+  for (const row of cellsInRow) {
+    rotateCells(row);
+  }
+}
 
-      const tile = document.getElementById(`${x}-${y}`);
-      const value = board[x][y];
+function moveLeft() {
+  for (const row of cellsInRow) {
+    rotateCells([...row].reverse());
+  }
+}
 
-      updateTile(tile, value);
+function arrowMove(direction) {
+  if (!clearCells.length && !isMergePossible()) {
+    loseMessage.classList.remove('hidden');
+  }
+
+  switch (direction) {
+    case 'ArrowUp':
+      moveUp();
+      break;
+    case 'ArrowDown':
+      moveDown();
+      break;
+    case 'ArrowRight':
+      moveRight();
+      break;
+    case 'ArrowLeft':
+      moveLeft();
+      break;
+  }
+
+  cells.forEach(cell => {
+    cell.removeAttribute('data-blocked');
+  });
+}
+
+function deleteElement(element) {
+  element.innerText = '';
+  element.className = 'field-cell';
+  clearCells.push(element);
+}
+
+function rotateElement(curr, prev) {
+  curr.innerText = prev.innerText;
+  curr.className = prev.className;
+  clearCells.splice(clearCells.indexOf(curr), 1);
+  deleteElement(prev);
+}
+
+function cellMerge(curr, prev) {
+  const value = curr.innerText * 2;
+
+  curr.innerText = value;
+  curr.className = `field-cell field-cell--${value}`;
+  gameScore.innerText = +gameScore.innerText + value;
+  deleteElement(prev);
+
+  curr.dataset.blocked = true;
+  prev.dataset.blocked = true;
+
+  if (value === winScore) {
+    winMessage.classList.remove('hidden');
+  }
+}
+
+function rotateCells(line) {
+  for (let i = 3; i > 0; i--) {
+    const moveAllowed = clearCells.includes(line[i])
+      && !clearCells.includes(line[i - 1]);
+
+    const mergeAllowed = line[i].innerText === line[i - 1].innerText
+      && line[i].innerText.length
+      && !line[i - 1].dataset.blocked;
+
+    if ((mergeAllowed || moveAllowed) && !rotated) {
+      rotated = true;
+    }
+
+    if (mergeAllowed) {
+      cellMerge(line[i], line[i - 1]);
+      rotateCells(line);
+    }
+
+    if (moveAllowed) {
+      rotateElement(line[i], line[i - 1]);
+      rotateCells(line);
     }
   }
 }
+
+document.addEventListener('keydown', (evt) => {
+  const arrowDirections = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+
+  if (arrowDirections.includes(evt.key)) {
+    evt.preventDefault();
+    arrowMove(evt.key);
+
+    if (rotated) {
+      randomCellFill();
+      rotated = false;
+    }
+  }
+});
+
+startButton.addEventListener('click', () => {
+  if (!started) {
+    start();
+  } else {
+    restart();
+  }
+});
